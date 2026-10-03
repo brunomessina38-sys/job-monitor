@@ -2,7 +2,7 @@ name: Job Monitor
 
 on:
   schedule:
-    - cron: "*/20 * * * *"    # ogni 20 minuti
+    - cron: "7,27,47 * * * *"  # ogni 20 minuti (evita lo scoccare dell'ora, più congestionato)
   workflow_dispatch:         # permette di avviarlo a mano dalla tab Actions
 
 permissions:
