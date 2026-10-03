@@ -1,6 +1,6 @@
 # Job Monitor — Meta · Microsoft · Google
 
-Controlla ogni 3 ore le pagine carriere di Meta, Microsoft e Google e ti manda una mail
+Controlla ogni 20 minuti le pagine carriere di Meta, Microsoft e Google e ti manda una mail
 quando compare una **nuova** posizione che corrisponde alle tue preferenze.
 
 - Filtri (ruoli, esclusioni, paesi): `config.py`
