@@ -245,8 +245,7 @@ def notify_github_issue(subject, jobs, intro):
     repo = os.environ["GITHUB_REPOSITORY"]
     req = urllib.request.Request(
         f"https://api.github.com/repos/{repo}/issues",
-        data=json.dumps({"title": subject, "body": body,
-                         "assignees": [owner] if owner else []}).encode(),
+        data=json.dumps({"title": subject, "body": body}).encode(),
         headers={"Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
                  "Accept": "application/vnd.github+json", "User-Agent": "job-monitor"})
     urllib.request.urlopen(req, timeout=30).read()
