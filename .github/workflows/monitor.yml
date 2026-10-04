@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "7,27,47 * * * *"  # ogni 20 minuti (evita lo scoccare dell'ora, più congestionato)
   workflow_dispatch:         # permette di avviarlo a mano dalla tab Actions
+    inputs:
+      test_notify:
+        description: "Invia solo una notifica di prova"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -30,7 +35,7 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python monitor.py
+        run: python monitor.py ${{ inputs.test_notify && '--test-notify' || '' }}
 
       - name: Salva lo stato
         run: |

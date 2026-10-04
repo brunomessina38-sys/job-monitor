@@ -228,7 +228,8 @@ def send_email(subject, body_html):
 
 def notify_github_issue(subject, jobs, intro):
     """Apre una issue nel repository: GitHub la invia per mail al proprietario."""
-    lines = [intro.replace("<b>", "**").replace("</b>", "**"), ""]
+    owner = os.environ.get("GITHUB_REPOSITORY_OWNER", "")
+    lines = [f"@{owner} " + intro.replace("<b>", "**").replace("</b>", "**"), ""]
     for company in ("Meta", "Microsoft", "Google"):
         group = sorted((j for j in jobs if j["company"] == company), key=lambda j: j["title"])
         if not group:
@@ -244,7 +245,8 @@ def notify_github_issue(subject, jobs, intro):
     repo = os.environ["GITHUB_REPOSITORY"]
     req = urllib.request.Request(
         f"https://api.github.com/repos/{repo}/issues",
-        data=json.dumps({"title": subject, "body": body}).encode(),
+        data=json.dumps({"title": subject, "body": body,
+                         "assignees": [owner] if owner else []}).encode(),
         headers={"Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
                  "Accept": "application/vnd.github+json", "User-Agent": "job-monitor"})
     urllib.request.urlopen(req, timeout=30).read()
@@ -280,6 +282,10 @@ def jobs_html(jobs, intro):
 
 def main():
     dry_run = "--dry-run" in sys.argv
+    if "--test-notify" in sys.argv:
+        notify("✅ Job Monitor: notifica di prova", [],
+               "Se leggi questo messaggio per mail, le notifiche funzionano.")
+        return
     state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
     seen = state.get("seen", {})
     failures = state.get("failures", {})
