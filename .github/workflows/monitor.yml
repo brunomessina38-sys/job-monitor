@@ -2,7 +2,7 @@ name: Job Monitor
 
 on:
   schedule:
-    - cron: "7,27,47 * * * *"  # ogni 20 minuti (evita lo scoccare dell'ora, più congestionato)
+    - cron: "7,27,47 * * * *"  # solo riserva: riavvia il ciclo se si è fermato
   workflow_dispatch:         # permette di avviarlo a mano dalla tab Actions
     inputs:
       test_notify:
@@ -13,6 +13,7 @@ on:
 permissions:
   contents: write
   issues: write
+  actions: write   # per riavviare il ciclo
 
 concurrency:
   group: job-monitor
@@ -21,7 +22,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
 
@@ -29,18 +30,30 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Controlla nuove posizioni
+      # GitHub fa partire il cron solo ogni 2-7 ore: il job resta acceso ~5h20,
+      # controlla ogni 10 minuti e poi riavvia se stesso.
+      - name: Controlla nuove posizioni (ogni 10 minuti)
         env:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python monitor.py ${{ inputs.test_notify && '--test-notify' || '' }}
-
-      - name: Salva lo stato
         run: |
           git config user.name "job-monitor-bot"
           git config user.email "job-monitor-bot@users.noreply.github.com"
-          git add seen_jobs.json
-          git diff --cached --quiet || git commit -m "Aggiorna posizioni viste"
-          git push
+          end=$((SECONDS + 320*60))
+          while true; do
+            python monitor.py ${{ inputs.test_notify && '--test-notify' || '' }} || echo "controllo fallito, riprovo al prossimo giro"
+            git add seen_jobs.json
+            git diff --cached --quiet || git commit -q -m "Aggiorna posizioni viste"
+            git pull -q --rebase && git push -q || echo "push fallito"
+            [ "${{ inputs.test_notify }}" = "true" ] && break
+            [ $SECONDS -ge $end ] && break
+            sleep 600
+          done
+
+      - name: Riavvia il ciclo
+        if: ${{ !cancelled() && inputs.test_notify != true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run monitor.yml --ref main -R ${{ github.repository }}
