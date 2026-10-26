@@ -31,8 +31,8 @@ jobs:
           python-version: "3.12"
 
       # GitHub fa partire il cron solo ogni 2-7 ore: il job resta acceso ~5h20,
-      # controlla ogni 10 minuti e poi riavvia se stesso.
-      - name: Controlla nuove posizioni (ogni 10 minuti)
+      # controlla ogni 5 minuti e poi riavvia se stesso.
+      - name: Controlla nuove posizioni (ogni 5 minuti)
         env:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
@@ -49,7 +49,7 @@ jobs:
             git pull -q --rebase && git push -q || echo "push fallito"
             [ "${{ inputs.test_notify }}" = "true" ] && break
             [ $SECONDS -ge $end ] && break
-            sleep 600
+            sleep 300
           done
 
       - name: Riavvia il ciclo
