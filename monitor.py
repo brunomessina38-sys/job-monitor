@@ -31,7 +31,7 @@ import config
 STATE_FILE = Path(__file__).with_name("seen_jobs.json")
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
-FAILURE_ALERT_THRESHOLD = 4  # esecuzioni fallite di fila prima di avvisarti
+FAILURE_ALERT_THRESHOLD = 12  # ~2 ore di errori di fila (un 429 isolato si risolve al giro dopo)
 
 
 # ----------------------------------------------------------------- HTTP
